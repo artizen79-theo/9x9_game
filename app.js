@@ -36,19 +36,44 @@ const multiTable = document.getElementById('multiplication-table');
 const SoundManager = {
     ctx: null,
 
-    init: function () {
+    init: async function () {
         if (!this.ctx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
+            try {
+                this.ctx = new AudioContext();
+            } catch (e) {
+                console.warn('AudioContext creation failed:', e);
+                return;
+            }
         }
         if (this.ctx.state === 'suspended') {
-            this.ctx.resume();
+            try {
+                await this.ctx.resume();
+                console.log('AudioContext resumed');
+            } catch (e) {
+                console.warn('AudioContext resume failed:', e);
+            }
         }
     },
 
-    playTone: function (freq, type, duration, release = 0.1) {
+    ensureRunning: async function () {
+        if (!this.ctx) await this.init();
+        if (!this.ctx) return false;
+        if (this.ctx.state === 'suspended') {
+            try {
+                await this.ctx.resume();
+                console.log('AudioContext resumed via ensureRunning');
+            } catch (e) {
+                console.warn('ensureRunning resume failed:', e);
+                return false;
+            }
+        }
+        return true;
+    },
+
+    playTone: async function (freq, type, duration, release = 0.1) {
         if (!this.ctx) return;
-        if (this.ctx.state === 'suspended') this.ctx.resume();
+        await this.ensureRunning();
 
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
@@ -60,7 +85,7 @@ const SoundManager = {
         gain.connect(this.ctx.destination);
 
         const now = this.ctx.currentTime;
-        gain.gain.setValueAtTime(0.5, now); // Increased volume
+        gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
 
         osc.start(now);
@@ -69,6 +94,7 @@ const SoundManager = {
     },
 
     playClick: function () {
+        // fire-and-forget: ensure context will be running
         this.init();
         this.playTone(800, 'sine', 0.05);
     },
@@ -76,21 +102,23 @@ const SoundManager = {
     playCorrect: function () {
         this.init();
         console.log("Sound: Correct!");
+        if (!this.ctx) return;
         const now = this.ctx.currentTime;
         this.playNote(523.25, now, 0.1); // C5
         this.playNote(659.25, now + 0.1, 0.1); // E5
         this.playNote(783.99, now + 0.2, 0.3); // G5
     },
 
-    playNote: function (freq, time, duration) {
-        if (this.ctx.state === 'suspended') this.ctx.resume();
+    playNote: async function (freq, time, duration) {
+        if (!this.ctx) return;
+        await this.ensureRunning();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq;
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        gain.gain.setValueAtTime(0.5, time); // Increased volume
+        gain.gain.setValueAtTime(0.2, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
         osc.start(time);
         osc.stop(time + duration);
@@ -102,15 +130,22 @@ const SoundManager = {
         this.playTone(150, 'sawtooth', 0.3);
     },
 
-    unlock: function () {
-        this.init();
+    unlock: async function () {
+        await this.init();
         // Play silent buffer to unlock iOS audio
-        const buffer = this.ctx.createBuffer(1, 1, 22050);
-        const source = this.ctx.createSource();
-        source.buffer = buffer;
-        source.connect(this.ctx.destination);
-        if (source.start) { source.start(0); }
-        else { source.noteOn(0); }
+        try {
+            if (!this.ctx) return;
+            const buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+            const source = this.ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(this.ctx.destination);
+            const now = this.ctx.currentTime;
+            if (source.start) { source.start(now); source.stop(now + 0.02); }
+            else if (source.noteOn) { source.noteOn(0); }
+            console.log('SoundManager.unlock: played silent buffer');
+        } catch (e) {
+            console.warn('SoundManager.unlock failed:', e);
+        }
     }
 };
 
