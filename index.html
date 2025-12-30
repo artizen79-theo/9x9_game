@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワクワク！九九マスター | 2年生の算数</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Confetti library for rewards -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Login Screen -->
+        <section id="login-screen" class="screen active">
+            <div class="card p-xl shadow-lg text-center">
+                <h1 class="title-main mb-lg">✨ ククマスタ ✨</h1>
+                <p class="mb-md">なまえを おしえてね！</p>
+                <input type="text" id="user-name" placeholder="なまえ" class="input-modern mb-md">
+                <button id="start-btn" class="btn btn-primary btn-lg w-full">はじめる！</button>
+            </div>
+        </section>
+
+        <!-- Main Menu -->
+        <section id="menu-screen" class="screen">
+            <div class="header">
+                <h2 id="welcome-msg">こんにちは、〇〇さん！</h2>
+            </div>
+            <div class="menu-grid">
+                <button class="menu-item card hover-lift" data-target="table-screen">
+                    <span class="emoji">🔢</span>
+                    <span>九九ひょう</span>
+                </button>
+                <button class="menu-item card hover-lift" data-target="quiz-choice-screen">
+                    <span class="emoji">🎯</span>
+                    <span>4たくクイズ</span>
+                </button>
+                <button class="menu-item card hover-lift" data-target="quiz-input-screen">
+                    <span class="emoji">✍️</span>
+                    <span>こたえを入力</span>
+                </button>
+                <button class="menu-item card hover-lift" data-target="records-screen">
+                    <span class="emoji">🏆</span>
+                    <span>きろく</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Table Screen -->
+        <section id="table-screen" class="screen">
+            <div class="header-nav">
+                <button class="back-btn">⬅️ もどる</button>
+                <h2>九九ひょう</h2>
+            </div>
+            <div class="card mb-md text-center">
+                <p class="mb-sm">マスを おすと こたえが でるよ！</p>
+                <button id="toggle-all-btn" class="btn btn-secondary btn-sm">ぜんぶ みせる / かくす</button>
+            </div>
+            <div class="table-container card">
+                <div id="multiplication-table" class="grid-table"></div>
+            </div>
+        </section>
+
+        <!-- Quiz Screen (Universal for Choice and Input) -->
+        <section id="quiz-screen" class="screen">
+            <div class="header-nav">
+                <button class="back-btn">⬅️ やめる</button>
+                <div class="progress-bar-container">
+                    <div id="progress-bar" class="progress-bar"></div>
+                </div>
+            </div>
+            <div class="quiz-container card mt-md">
+                <div class="quiz-info mb-md">
+                    <span id="quiz-count">だい 1/10 もん</span>
+                    <span id="quiz-timer">⏱️ 0:00</span>
+                </div>
+                <div class="question-box mb-lg">
+                    <span id="q-formula">7 × 8 = ?</span>
+                </div>
+
+                <!-- Choice Mode -->
+                <div id="choice-options" class="options-grid hidden">
+                    <button class="choice-btn">1</button>
+                    <button class="choice-btn">2</button>
+                    <button class="choice-btn">3</button>
+                    <button class="choice-btn">4</button>
+                </div>
+
+                <!-- Input Mode -->
+                <div id="input-option" class="input-box hidden">
+                    <input type="number" id="answer-input" placeholder="こたえ" class="input-modern">
+                    <button id="submit-answer" class="btn btn-primary mt-md">こたえあわせ</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Screen -->
+        <section id="result-screen" class="screen">
+            <div class="card text-center">
+                <h2 id="result-title" class="title-main mb-md">やったね！</h2>
+                <div class="result-stats mb-lg">
+                    <p>せいかい: <span id="result-score">10/10</span></p>
+                    <p>タイム: <span id="result-time">0:45</span></p>
+                </div>
+                <div id="reward-container" class="reward-animation mb-lg">
+                    <!-- Dynamic reward like a big flower stamp -->
+                </div>
+                <button class="btn btn-primary btn-lg" onclick="location.reload()">もういちど！</button>
+                <button class="btn btn-secondary btn-lg mt-sm back-to-menu">メニューへ</button>
+            </div>
+        </section>
+
+        <!-- Records Screen -->
+        <section id="records-screen" class="screen">
+            <div class="header-nav">
+                <button class="back-btn">⬅️ もどる</button>
+                <h2>ぜんかいの きろく</h2>
+            </div>
+            <div class="records-container card">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>にちじ</th>
+                            <th>モード</th>
+                            <th>スコア</th>
+                            <th>タイム</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-body">
+                        <!-- Dynamic records -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Custom Dialogs/Feedback -->
+    <div id="feedback-overlay" class="overlay hidden">
+        <div class="feedback-content">
+            <div id="feedback-emoji">🌸</div>
+            <div id="feedback-text">せいかい！</div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
