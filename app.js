@@ -48,6 +48,8 @@ const SoundManager = {
 
     playTone: function (freq, type, duration, release = 0.1) {
         if (!this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
 
@@ -58,22 +60,22 @@ const SoundManager = {
         gain.connect(this.ctx.destination);
 
         const now = this.ctx.currentTime;
-        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.setValueAtTime(0.5, now); // Increased volume
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
 
         osc.start(now);
         osc.stop(now + duration + release);
+        console.log(`Sound: ${type} ${freq}Hz`);
     },
 
     playClick: function () {
         this.init();
-        // Short high pop
         this.playTone(800, 'sine', 0.05);
     },
 
     playCorrect: function () {
         this.init();
-        // Major triad chime
+        console.log("Sound: Correct!");
         const now = this.ctx.currentTime;
         this.playNote(523.25, now, 0.1); // C5
         this.playNote(659.25, now + 0.1, 0.1); // E5
@@ -81,13 +83,14 @@ const SoundManager = {
     },
 
     playNote: function (freq, time, duration) {
+        if (this.ctx.state === 'suspended') this.ctx.resume();
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
         osc.frequency.value = freq;
         osc.connect(gain);
         gain.connect(this.ctx.destination);
-        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.setValueAtTime(0.5, time); // Increased volume
         gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
         osc.start(time);
         osc.stop(time + duration);
