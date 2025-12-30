@@ -97,6 +97,17 @@ const SoundManager = {
         this.init();
         // Low buzzer
         this.playTone(150, 'sawtooth', 0.3);
+    },
+
+    unlock: function () {
+        this.init();
+        // Play silent buffer to unlock iOS audio
+        const buffer = this.ctx.createBuffer(1, 1, 22050);
+        const source = this.ctx.createSource();
+        source.buffer = buffer;
+        source.connect(this.ctx.destination);
+        if (source.start) { source.start(0); }
+        else { source.noteOn(0); }
     }
 };
 
@@ -132,6 +143,15 @@ function init() {
     });
 
     startBtn.addEventListener('click', handleStart);
+
+    // Global unlock for mobile on first touch
+    document.body.addEventListener('touchstart', function () {
+        SoundManager.unlock();
+    }, { once: true });
+
+    document.body.addEventListener('click', function () {
+        SoundManager.unlock();
+    }, { once: true });
 
     // Table logic
     const toggleBtn = document.getElementById('toggle-all-btn');
@@ -178,6 +198,7 @@ function showScreen(id) {
 }
 
 function handleStart() {
+    SoundManager.unlock(); // Explicit unlock on start button
     const name = userNameInput.value.trim();
     if (!name) {
         alert('なまえを いれてね！');
