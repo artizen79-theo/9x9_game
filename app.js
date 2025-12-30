@@ -32,6 +32,74 @@ const startBtn = document.getElementById('start-btn');
 const welcomeMsg = document.getElementById('welcome-msg');
 const multiTable = document.getElementById('multiplication-table');
 
+// --- Sound Manager (Web Audio API) ---
+const SoundManager = {
+    ctx: null,
+
+    init: function () {
+        if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioContext();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    },
+
+    playTone: function (freq, type, duration, release = 0.1) {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.frequency.value = freq;
+        osc.type = type;
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        const now = this.ctx.currentTime;
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration + release);
+
+        osc.start(now);
+        osc.stop(now + duration + release);
+    },
+
+    playClick: function () {
+        this.init();
+        // Short high pop
+        this.playTone(800, 'sine', 0.05);
+    },
+
+    playCorrect: function () {
+        this.init();
+        // Major triad chime
+        const now = this.ctx.currentTime;
+        this.playNote(523.25, now, 0.1); // C5
+        this.playNote(659.25, now + 0.1, 0.1); // E5
+        this.playNote(783.99, now + 0.2, 0.3); // G5
+    },
+
+    playNote: function (freq, time, duration) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        gain.gain.setValueAtTime(0.1, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        osc.start(time);
+        osc.stop(time + duration);
+    },
+
+    playWrong: function () {
+        this.init();
+        // Low buzzer
+        this.playTone(150, 'sawtooth', 0.3);
+    }
+};
+
 // --- Initialization ---
 function init() {
     // Check if user already exists
@@ -144,6 +212,7 @@ function generateTable() {
             cell.dataset.manual = 'false';
 
             cell.addEventListener('click', () => {
+                SoundManager.playClick();
                 if (cell.classList.contains('revealed')) {
                     cell.textContent = '?';
                     cell.classList.remove('revealed');
@@ -245,10 +314,12 @@ function setupChoices(correct) {
 function checkChoiceAnswer(selected, correct, btn) {
     const isCorrect = selected === correct;
     if (isCorrect) {
+        SoundManager.playCorrect();
         State.quiz.score++;
         btn.classList.add('correct');
         showFeedback(true);
     } else {
+        SoundManager.playWrong();
         btn.classList.add('wrong');
         showFeedback(false);
     }
@@ -264,9 +335,11 @@ function checkInputAnswer() {
     if (isNaN(val)) return;
 
     if (val === correct) {
+        SoundManager.playCorrect();
         State.quiz.score++;
         showFeedback(true);
     } else {
+        SoundManager.playWrong();
         showFeedback(false);
     }
 
